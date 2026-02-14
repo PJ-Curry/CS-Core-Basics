@@ -21,7 +21,7 @@ public:
     {
         if(node == NULL)
         {
-            return node;
+            return node; 
         }
         while(node->left != NULL)
         {
