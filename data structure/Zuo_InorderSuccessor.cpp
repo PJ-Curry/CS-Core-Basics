@@ -27,7 +27,7 @@ public:
         {
             node = node->left;
         }
-        return node;
+        return node; 
     }
 
     //寻找后继节点
