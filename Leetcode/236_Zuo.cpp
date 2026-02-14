@@ -1,3 +1,4 @@
+//二叉树中两个节点的最小祖先
 #include<bits/stdc++.h>
 using namespace std;
 struct TreeNode {
