@@ -35,6 +35,22 @@ void preOrderUnRecur(TreeNode *head)
         }
     }
 }
+void preorderTraversal(TreeNode* root){
+    TreeNode *cur = root;
+    stack<TreeNode*> st;
+    while(!st.empty() || cur != nullptr){
+        if(cur != nullptr){
+            cout << cur->val << " ";
+            st.push(cur);
+            cur = cur->left;
+        }
+        else{
+            cur = st.top();//从栈里找出来一个存档
+            st.pop();
+            cur = cur->right;
+        }
+    }
+}
 
 //中序 左根右 只要按照这个顺序“根 左”压栈 就始终能保证是中序 当栈空了 就去右孩子 继续重复根左压栈
 void inOrderUnRecur(TreeNode *head)
