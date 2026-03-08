@@ -46,7 +46,7 @@ unordered_set<Edge*> primMST(Node* startNode){
         //看看这条路通向哪里
         Node* toNode = curEdge->to;
 
-        if(conqueredSet.find(toNode) == conqueredSet.end()){
+        if(conqueredSet.find(toNode) == conqueredSet.end()){//.end()是查找结果没找到的意思
             conqueredSet.insert(toNode);
             result.insert(curEdge);
 

@@ -21,7 +21,7 @@ vector<Node*> sortedTopology(Graph *graph){
 
     //入度为0的节点能入队
     queue<Node*> zeroInqueue;
-
+    //数据处理阶段
     for(auto& pair : graph->nodes){
         Node* node = pair.second;
         //开始记录入度数
@@ -49,7 +49,11 @@ vector<Node*> sortedTopology(Graph *graph){
             }
         }
     }
-    return result;
+    if (result.size() == graph->nodes.size()){
+        return result; // 完美剥完，没有环！
+    } else{
+        return {};     // 数量对不上！图里有死循环，直接退回空数组！
+    }
 }
 
 // 本地测试大厅
@@ -84,3 +88,4 @@ int main() {
 
     return 0;
 }
+//具体习题 见leetcode207 210本质上的原题
