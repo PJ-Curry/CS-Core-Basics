@@ -43,12 +43,12 @@ int main() {
     // 第一步：读入所有人，建立名字和 ID 的双向映射
     // 假设前 n 行是男人，后 n 行是女人
     for (int i = 0; i < n; i++) {
-        if (!getline(cin, line) || line.empty()) { i--; continue; }
+        if (!getline(cin, line) || line.empty()) { i--; continue; } //防止读到空行
         string name; vector<string> v;
-        parse(line, name, v);
-        m_to_id[name] = i;
-        man_names[i] = name;
-        m_prefs_raw[name] = v;
+        parse(line, name, v);//拆分字符串 得到名字和偏好列表
+        m_to_id[name] = i;//给名字贴标签
+        man_names[i] = name;//反向登记
+        m_prefs_raw[name] = v;//男士的原始心仪名单
         m_input_order.push_back(name);
     }
     for (int i = 0; i < n; i++) {
