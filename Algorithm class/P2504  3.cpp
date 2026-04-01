@@ -76,6 +76,14 @@ int main(){
             ans++;
         }
     }
+    /*
+    for(int i = 0; i < m; i++){
+        if((double)monkey_jumps[i] >= max_mst_edge){
+            ans++;
+        }
+        cout << ans << endl;
+    }
+    */
 
     cout << ans << endl;
 
