@@ -1,79 +1,83 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-using ll = long long;
+struct Edge {
+    int to;
+    int rev;
+    int cap;
+    long long cost;
+};
 
-struct MaxCostMaxFlow {
-    struct Edge {
-        int to, rev;
-        ll cap, cost;
-    };
+vector<vector<Edge>> g;
 
-    int n;
-    vector<vector<Edge>> g;
+void addEdge(int u, int v, int cap, long long cost) {
+    Edge a{v, (int)g[v].size(), cap, cost};
+    Edge b{u, (int)g[u].size(), 0, -cost};
+    g[u].push_back(a);
+    g[v].push_back(b);
+}
 
-    MaxCostMaxFlow(int n) : n(n), g(n) {}
+pair<int, long long> maxCostMaxFlow(int S, int T, int need) {
+    int n = g.size();
+    int flow = 0;
+    long long cost = 0;
 
-    void addEdge(int u, int v, ll cap, ll cost) {
-        Edge a{v, (int)g[v].size(), cap, cost};
-        Edge b{u, (int)g[u].size(), 0, -cost};
-        g[u].push_back(a);
-        g[v].push_back(b);
-    }
+    const long long NEG = LLONG_MIN / 4;
 
-    pair<ll, ll> solve(int s, int t) {
-        const ll NEG = LLONG_MIN / 4;
-        ll flow = 0, cost = 0;
-        vector<ll> dist(n);
-        vector<int> inq(n), pv(n), pe(n);
+    while (flow < need) {
+        vector<long long> dist(n, NEG);
+        vector<int> preV(n, -1);
+        vector<int> preE(n, -1);
+        vector<int> inq(n, 0);
 
-        while (true) {
-            fill(dist.begin(), dist.end(), NEG);
-            fill(inq.begin(), inq.end(), 0);
-            queue<int> q;
-            dist[s] = 0;
-            q.push(s);
-            inq[s] = 1;
+        queue<int> q;
+        dist[S] = 0;
+        q.push(S);
+        inq[S] = 1;
 
-            while (!q.empty()) {
-                int u = q.front();
-                q.pop();
-                inq[u] = 0;
+        while (!q.empty()) {
+            int u = q.front();
+            q.pop();
+            inq[u] = 0;
 
-                for (int i = 0; i < (int)g[u].size(); ++i) {
-                    Edge &e = g[u][i];
-                    if (e.cap <= 0) continue;
-                    if (dist[e.to] < dist[u] + e.cost) {
-                        dist[e.to] = dist[u] + e.cost;
-                        pv[e.to] = u;
-                        pe[e.to] = i;
-                        if (!inq[e.to]) {
-                            inq[e.to] = 1;
-                            q.push(e.to);
-                        }
+            for (int i = 0; i < (int)g[u].size(); i++) {
+                Edge &e = g[u][i];
+
+                if (e.cap > 0 && dist[e.to] < dist[u] + e.cost) {
+                    dist[e.to] = dist[u] + e.cost;
+                    preV[e.to] = u;
+                    preE[e.to] = i;
+
+                    if (!inq[e.to]) {
+                        inq[e.to] = 1;
+                        q.push(e.to);
                     }
                 }
             }
-
-            if (dist[t] == NEG) break;
-
-            ll aug = LLONG_MAX / 4;
-            for (int v = t; v != s; v = pv[v]) {
-                aug = min(aug, g[pv[v]][pe[v]].cap);
-            }
-            for (int v = t; v != s; v = pv[v]) {
-                Edge &e = g[pv[v]][pe[v]];
-                e.cap -= aug;
-                g[v][e.rev].cap += aug;
-            }
-
-            flow += aug;
-            cost += aug * dist[t];
         }
 
-        return {flow, cost};
+        if (dist[T] == NEG) {
+            break;
+        }
+
+        int add = need - flow;
+
+        for (int v = T; v != S; v = preV[v]) {
+            add = min(add, g[preV[v]][preE[v]].cap);
+        }
+
+        for (int v = T; v != S; v = preV[v]) {
+            Edge &e = g[preV[v]][preE[v]];
+            e.cap -= add;
+            g[v][e.rev].cap += add;
+        }
+
+        flow += add;
+        cost += 1LL * add * dist[T];
     }
-};
+
+    return {flow, cost};
+}
 
 int main() {
     ios::sync_with_stdio(false);
@@ -85,54 +89,66 @@ int main() {
     int P, Q;
     cin >> P >> Q;
 
-    auto id = [&](int y, int x) {
-        return y * (Q + 1) + x;
+    int pointCnt = (P + 1) * (Q + 1);
+    int S = pointCnt;
+    int T = pointCnt + 1;
+
+    g.assign(pointCnt + 2, {});
+
+    auto id = [&](int x, int y) {
+        return x * (Q + 1) + y;
     };
 
-    int nodeCount = (P + 1) * (Q + 1);
-    int S = nodeCount;
-    int T = nodeCount + 1;
-    MaxCostMaxFlow mf(nodeCount + 2);
+    const int INF = 1000000000;
 
-    const ll INF = (ll)4e18;
-
-    // 向东走的边：(x, y) -> (x + 1, y)。
-    for (int y = 0; y <= P; ++y) {
-        for (int x = 0; x < Q; ++x) {
-            ll w;
+    /*
+        前 P + 1 行，每行 Q 个数：
+        第 i 行第 j 个表示 (i, j) -> (i, j + 1)
+    */
+    for (int i = 0; i <= P; i++) {
+        for (int j = 0; j < Q; j++) {
+            long long w;
             cin >> w;
 
-            // 第一台经过这条边的机器人可以采到标本，获得价值 w。
-            mf.addEdge(id(y, x), id(y, x + 1), 1, w);
-            // 后面的机器人仍然可以通过，但标本已经被采走，收益为 0。
-            mf.addEdge(id(y, x), id(y, x + 1), INF, 0);
+            addEdge(id(i, j), id(i, j + 1), 1, w);
+            addEdge(id(i, j), id(i, j + 1), INF, 0);
         }
     }
 
-    // 向北走的边：(x, y) -> (x, y + 1)。
-    for (int x = 0; x <= Q; ++x) {
-        for (int y = 0; y < P; ++y) {
-            ll w;
+    /*
+        后 Q + 1 行，每行 P 个数：
+        第 i 行第 j 个表示 (j, i) -> (j + 1, i)
+    */
+    for (int i = 0; i <= Q; i++) {
+        for (int j = 0; j < P; j++) {
+            long long w;
             cin >> w;
-            mf.addEdge(id(y, x), id(y + 1, x), 1, w);
-            mf.addEdge(id(y, x), id(y + 1, x), INF, 0);
+
+            addEdge(id(j, i), id(j + 1, i), 1, w);
+            addEdge(id(j, i), id(j + 1, i), INF, 0);
         }
     }
 
-    for (int i = 0; i < a; ++i) {
-        ll k;
-        int x, y;
+    int totalRobot = 0;
+
+    for (int i = 0; i < a; i++) {
+        int k, x, y;
         cin >> k >> x >> y;
-        mf.addEdge(S, id(y, x), k, 0);
+
+        addEdge(S, id(x, y), k, 0);
+        totalRobot += k;
     }
 
-    for (int i = 0; i < b; ++i) {
-        ll r;
-        int x, y;
+    for (int i = 0; i < b; i++) {
+        int r, x, y;
         cin >> r >> x >> y;
-        mf.addEdge(id(y, x), T, r, 0);
+
+        addEdge(id(x, y), T, r, 0);
     }
 
-    cout << mf.solve(S, T).second << '\n';
+    pair<int, long long> ans = maxCostMaxFlow(S, T, totalRobot);
+
+    cout << ans.second << '\n';
+
     return 0;
 }
